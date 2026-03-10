@@ -1,98 +1,140 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# API Catalog
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This is an API for a service catalog that supports a page for viewing,
+filtering, and adding services. The structure is based on the @nestjs typescript
+template.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Setup
 
-## Description
+Prerequisites:
+    * Node 20 (`fnm` and `nvm` are supported)
+    * Docker Compose
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+1. Clone
+    ```sh
+    git clone https://github.com/mattcan/service-catalog.git matthewcantelon-svc-catalog
+    cd matthewcantelon-svc-catalog
+    ```
+2. Install dependencies
+    ```sh
+    npm i
+    ```
+3. Setup environment
+    ```sh
+    cp .env.example .env
+    ```
+4. Start
+    ```sh
+    docker compose up -d && npm start
+    ```
 
-## Project setup
+The example environment is preconfigured with credentials for local development.
 
-```bash
-$ npm install
-```
+## Testing
 
-## Compile and run the project
+Tests can be run with `npm test`. This will execute both the unit tests and E2E
+tests. E2E tests were prioritized because they validate the full request
+lifecycle without mocking framework internals.
 
-```bash
-# development
-$ npm run start
+## Endpoints
 
-# watch mode
-$ npm run start:dev
+| Method | Path | Description |
+|---|---|---|
+| GET | /services | list, search, sort, paginate |
+| POST | /services | create |
+| GET | /services/:id | fetch one (includes versions) |
+| PATCH | /services/:id | update |
+| DELETE | /services/:id | soft delete |
+| GET | /services/:id/versions | list versions |
+| POST | /services/:id/versions | create version |
+| GET | /services/:id/versions/:vId | fetch one version |
+| DELETE | /services/:id/versions/:vId | soft delete version |
 
-# production mode
-$ npm run start:prod
-```
+### Service Listing query parameters
 
-## Run tests
+* Pagination:
+    * `page` to set the current page
+    * `pageSize` to set the number of items to return
+    * returns the services for that page along with the following headers,
+      matching the Gitlab API:
+        * `x-page`
+        * `x-next-page`
+        * `x-prev-page`
+        * `x-per-page`
+        * `x-total`
+        * `x-total-pages`
+* Sorting:
+    * `sort` which uses a Mongo-like mechanism of `+<fieldname>` for ASC and
+      `-<fieldname>` for DESC
+        * fields are in an allow list so only `name` and `description` can be
+          used
+* Filtering:
+    * `search` takes a term or partial term and does an `ILIKE` match across
+      `Service` `name` and `description`
+        * This search is very simplistic and will not scale well for larger
+          datasets, both in terms of performance and maintenance
+        * In a production context, I would look towards Postgres full-text
+          search or even a dedicated search system
 
-```bash
-# unit tests
-$ npm run test
+## Data model
 
-# e2e tests
-$ npm run test:e2e
+A `Service` is a model with a `name`, `description`, and a one-to-many
+relationship with `Version`. In this API, a `Version` is a `tag` and a
+`description`.
 
-# test coverage
-$ npm run test:cov
-```
+## Considerations/Trade-offs
 
-## Deployment
+### Security
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Left off common security tools mainly to keep testing simple and reduce the
+overhead of setting up the tooling. To really complete this project I would add
+helmet, CORS, and CSRF configuration.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Rate limiting should be done at an infrastructure level and not at the service
+level.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+### Auth
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Auth was prototyped using passport-http-bearer with a BearerStrategy, but was
+removed before submission. A static bearer token works for a demo but is not
+production-appropriate as it doesn't support token expiry, revocation, or
+per-user identity. Given more time, I would implement JWT-based auth via
+@nestjs/passport + passport-jwt, with a dedicated users table and a token
+issuance endpoint. Authorization (e.g. scoping visibility or fine-grained RBAC)
+would be enforced at the service layer using the user identity extracted from
+the token. In a larger context, it would make sense to apply policies (eg Cerbos
+or OPA) and have a separate Authorization service to work with.
 
-## Resources
+### Database
 
-Check out a few resources that may come in handy when working with NestJS:
+The biggest gap is that I chose to use `synchronize: true` in the TypeORM setup.
+This should absolutely be `false` and migrations should be used for all database
+changes. Main reason for leaving this off is time.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+There are no hard deletes in the system, which could increase query complexity.
+TypeORM does a good job of masking this complexity with the `Repository`
+pattern so we get the benefits of auditability while reducing the actual complexity.
+The only concern going forward would be database size over the long term.
 
-## Support
+### Request Validation
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+I chose to use the `ValidationPipe` for request validation. The `whitelist` and
+`transform` options allow for greater security by avoiding any mass-assignment
+issues. These options also make the interface more secure by automatically
+checking the typing and structure of requests against the schema (DTO).
 
-## Stay in touch
+## If there was more time
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+* Routes - using the default route as the start point for `Service`
+* Auth - setting up an authorization service in Docker and applying policies
+  would be more representative of an actual service
+* Testing - reducing the E2E tests and looking for a few more edge cases,
+  especially around search and sorting parameters
+* Database - using migrations
+* Security - as mentioned, the helmet + CORS + CSRF combo
+* Responses - each handler is a little different, I'd like to clean them up to
+  be structured more similarly
+* Documentation - OpenAPI seems possible via plugin but I didn't investigate
+  deeply
+* Observability - structured logs, use different logging levels, and making sure
+  trace IDs are available on every request
