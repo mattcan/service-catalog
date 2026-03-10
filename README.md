@@ -7,8 +7,9 @@ template.
 ## Setup
 
 Prerequisites:
-    * Node 20 (`fnm` and `nvm` are supported)
-    * Docker Compose
+
+* Node 20 (`fnm` and `nvm` are supported)
+* Docker Compose
 
 1. Clone
     ```sh
