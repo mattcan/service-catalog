@@ -11,6 +11,8 @@ Prerequisites:
 * Node 20 (`fnm` and `nvm` are supported)
 * Docker Compose
 
+Setup and start:
+
 1. Clone
     ```sh
     git clone https://github.com/mattcan/service-catalog.git matthewcantelon-svc-catalog
