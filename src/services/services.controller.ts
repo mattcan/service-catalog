@@ -128,6 +128,7 @@ export class ServicesController {
         url: `/services/${id}/versions/${v.id}`,
         tag: v.tag,
         description: v.description,
+        id: v.id,
       })),
     }
   }
